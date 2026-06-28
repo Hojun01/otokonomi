@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>漢飲み — アンプラ、最後の大花火</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0602;
+      --deep: #130c04;
+      --gold: #c8860a;
+      --gold-bright: #f5a623;
+      --gold-light: #ffd166;
+      --ember: #e84c0a;
+      --red: #9b1a0a;
+      --cream: #f0ddb0;
+      --white: #fff8ee;
+    }
+    html { scroll-behavior: auto; }
+    body { background: var(--black); color: var(--cream); font-family: 'Noto Sans JP', sans-serif; overflow-x: hidden; }
+
+    #fire-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+    .hero {
+      position: relative; min-height: 100svh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 2rem 1rem 3rem; z-index: 1;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 80% 60% at 50% 90%, rgba(200,100,10,0.2) 0%, transparent 70%);
+    }
+    .eyebrow {
+      font-family: 'Noto Serif JP', serif; font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+      letter-spacing: 0.25em; color: var(--gold); margin-bottom: 1rem;
+      opacity: 0; animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: 'Noto Serif JP', serif; font-size: clamp(5rem, 22vw, 14rem);
+      font-weight: 900; line-height: 0.9;
+      background: linear-gradient(160deg, var(--gold-light) 0%, var(--gold-bright) 40%, var(--ember) 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 40px rgba(245,166,35,0.4));
+      opacity: 0; animation: blazeIn 1s 0.5s forwards;
+    }
+    .hero-sub {
+      font-family: 'Noto Serif JP', serif; font-size: clamp(1rem, 3.5vw, 1.6rem);
+      color: var(--cream); letter-spacing: 0.1em; margin-top: 1.5rem;
+      opacity: 0; animation: fadeUp 0.8s 1.2s forwards;
+    }
+    .hero-tagline {
+      margin-top: 2.5rem; font-size: clamp(0.8rem, 2.2vw, 1rem); color: var(--gold);
+      letter-spacing: 0.3em; border-top: 1px solid rgba(200,134,10,0.4);
+      border-bottom: 1px solid rgba(200,134,10,0.4); padding: 0.6rem 2rem;
+      opacity: 0; animation: fadeUp 0.8s 1.6s forwards;
+    }
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; letter-spacing: 0.2em; color: rgba(200,134,10,0.6);
+      animation: bounce 2s infinite;
+    }
+    .scroll-hint::after { content: '↓'; font-size: 1.2rem; color: var(--gold); }
+
+    .divider { position: relative; z-index: 1; text-align: center; padding: 1rem 0; }
+    .divider-line { display: inline-flex; align-items: center; gap: 1rem; color: var(--gold); font-size: 1.2rem; }
+    .divider-line::before, .divider-line::after { content: ''; display: block; width: 80px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+    .divider-line::after { background: linear-gradient(90deg, var(--gold), transparent); }
+
+    .info { position: relative; z-index: 1; padding: 4rem 1.5rem 5rem; max-width: 800px; margin: 0 auto; }
+    .section-label { font-size: 0.7rem; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 2.5rem; text-align: center; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: rgba(200,134,10,0.2); border: 1px solid rgba(200,134,10,0.3); }
+    .info-card { background: var(--deep); padding: 2rem 1.5rem; text-align: center; position: relative; overflow: hidden; transition: background 0.3s; }
+    .info-card:hover { background: #1a1005; }
+    .info-card::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--ember), transparent); transform: scaleX(0); transition: transform 0.4s; }
+    .info-card:hover::before { transform: scaleX(1); }
+    .info-label { font-size: 0.65rem; letter-spacing: 0.3em; color: var(--gold); display: block; margin-bottom: 0.8rem; }
+    .info-value { font-family: 'Noto Serif JP', serif; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 900; color: var(--white); line-height: 1.2; }
+    .info-note { font-size: 0.7rem; color: rgba(240,221,176,0.5); margin-top: 0.4rem; }
+
+    .story { position: relative; z-index: 1; padding: 4rem 1.5rem 5rem; max-width: 680px; margin: 0 auto; text-align: center; }
+    .story-quote { font-family: 'Noto Serif JP', serif; font-size: clamp(1.1rem, 3.5vw, 1.6rem); font-weight: 700; line-height: 2; color: var(--cream); }
+    .story-quote em { font-style: normal; color: var(--gold-bright); }
+    .story-body { margin-top: 2rem; font-size: clamp(0.85rem, 2.5vw, 0.95rem); line-height: 2.2; color: rgba(240,221,176,0.7); }
+
+    .cta-section { position: relative; z-index: 1; padding: 3rem 1.5rem 6rem; text-align: center; }
+    .cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(155,26,10,0.15) 0%, transparent 70%); pointer-events: none; }
+    .cta-title { font-family: 'Noto Serif JP', serif; font-size: clamp(1.4rem, 5vw, 2.5rem); font-weight: 900; color: var(--gold-bright); margin-bottom: 0.5rem; }
+    .cta-sub { font-size: clamp(0.8rem, 2.5vw, 0.95rem); color: rgba(240,221,176,0.6); letter-spacing: 0.15em; margin-bottom: 2.5rem; }
+    .btn {
+      display: inline-block; font-family: 'Noto Serif JP', serif; font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 700; letter-spacing: 0.2em; padding: 1rem 3rem;
+      background: linear-gradient(135deg, var(--ember) 0%, var(--red) 100%);
+      color: var(--white); border: none; cursor: pointer; text-decoration: none;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: filter 0.3s, transform 0.2s;
+    }
+    .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid rgba(200,134,10,0.2); padding: 2rem 1.5rem; text-align: center; font-size: 0.7rem; color: rgba(240,221,176,0.3); letter-spacing: 0.2em; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes blazeIn {
+      0%   { opacity: 0; transform: scale(0.85); }
+      60%  { filter: drop-shadow(0 0 60px rgba(245,166,35,0.7)); }
+      100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 30px rgba(245,166,35,0.4)); }
+    }
+    @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s, transform 0.7s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+
+<canvas id="fire-canvas"></canvas>
+
+<section class="hero">
+  <p class="eyebrow">アンプラ、最後の大花火</p>
+  <h1 class="hero-title">漢飲み</h1>
+  <p class="hero-sub">憧れるのをやめましょう。</p>
+  <p class="hero-tagline">男だけで語り尽くす、<br>最高の夜にしようぜ。</p>
+  <div class="scroll-hint">SCROLL</div>
+</section>
+
+<div class="divider"><span class="divider-line">🔥</span></div>
+
+<section class="story">
+  <p class="section-label reveal">About</p>
+  <p class="story-quote reveal">
+    長らく<em>眠っていた炎</em>が、<br>
+    いま再び燃え上がる。
+  </p>
+  <p class="story-body reveal">
+    最高のメンツが集まるのは、<br>
+    もう最後かもしれない。<br><br>
+    だからこそ、全力で。全員で。<br>
+    卒業前に、でかい花火を一発ぶち上げよう。
+  </p>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<section class="info">
+  <p class="section-label reveal">開催情報</p>
+  <div class="info-grid reveal">
+    <div class="info-card">
+      <span class="info-label">場所</span>
+      <p class="info-value">福泉餃子</p>
+    </div>
+    <div class="info-card">
+      <span class="info-label">日程</span>
+      <p class="info-value">要調整</p>
+      <p class="info-note">7月末・8月頭を想定</p>
+    </div>
+    <div class="info-card">
+      <span class="info-label">時間</span>
+      <p class="info-value">19:00 START</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<section class="info" style="padding-bottom: 3rem;">
+  <p class="section-label reveal">アクセス</p>
+  <div class="reveal" style="border: 1px solid rgba(200,134,10,0.3); overflow: hidden;">
+    <iframe
+      src="https://maps.google.com/maps?q=33.57735,130.252433&hl=ja&z=16&output=embed"
+      width="100%" height="320"
+      style="border:0; display:block; filter: grayscale(0.3) sepia(0.4) contrast(1.1);"
+      allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="福泉餃子 地図">
+    </iframe>
+    <a href="https://maps.app.goo.gl/uRXrVmAMTvPxokqV8" target="_blank" rel="noopener noreferrer"
+      style="display:block;margin-top:1rem;text-align:center;font-family:'Noto Serif JP',serif;font-size:0.85rem;letter-spacing:0.2em;color:var(--gold);text-decoration:none;padding:0.6rem;border:1px solid rgba(200,134,10,0.3);transition:background 0.3s;"
+      onmouseover="this.style.background='rgba(200,134,10,0.1)'" onmouseout="this.style.background='transparent'"
+    >Google マップで開く →</a>
+  </div>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <h2 class="cta-title reveal">お前も来い。</h2>
+  <p class="cta-sub reveal">全員集合。それだけでいい。</p>
+  <div class="reveal">
+    <a href="#" class="btn" onclick="launchFireworks(event)">参加する</a>
+  </div>
+</section>
+
+<footer>&copy; 2025 アンプラ漢飲み実行委員会</footer>
+
+<script>
+  // ── 軽量背景パーティクル（40個に削減）──
+  const canvas = document.getElementById('fire-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(init) {
+      this.x = Math.random() * W;
+      this.y = init ? Math.random() * H : H + 10;
+      this.vy = -(Math.random() * 1.5 + 0.5);
+      this.life = 0;
+      this.maxLife = Math.random() * 100 + 60;
+      this.size = Math.random() * 4 + 1;
+      this.color = `hsl(${Math.random()*30+10},100%,60%)`;
+    }
+    update() {
+      this.life++; this.y += this.vy; this.size *= 0.99;
+      if (this.life >= this.maxLife || this.size < 0.3) this.reset(false);
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = (1 - this.life / this.maxLife) * 0.7;
+      ctx.fillStyle = this.color;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  for (let i = 0; i < 40; i++) particles.push(new Particle());
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // ── Scroll reveal ──
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // ── 花火 ──
+  function launchFireworks(e) {
+    e.preventDefault();
+
+    const ov = document.createElement('canvas');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
+    ov.width = window.innerWidth; ov.height = window.innerHeight;
+    document.body.appendChild(ov);
+    const fc = ov.getContext('2d');
+    const COLORS = ['#ffd166','#f5a623','#e84c0a','#fff8ee','#ff6b6b','#c8860a'];
+
+    // ロケット3発
+    const rockets = Array.from({length: 3}, (_, i) => ({
+      x: ov.width * (0.2 + i * 0.3),
+      y: ov.height,
+      vy: -(16 + Math.random() * 4),
+      targetY: ov.height * (0.1 + Math.random() * 0.2),
+      color: COLORS[i % COLORS.length],
+      trail: [],
+      done: false,
+    }));
+
+    const sparks = [];
+
+    function burst(x, y, big) {
+      const n = big ? 150 : 80;
+      const spd = big ? 14 : 8;
+      for (let j = 0; j < n; j++) {
+        const a = (Math.PI * 2 / n) * j;
+        const s = Math.random() * spd + (big ? 4 : 2);
+        sparks.push({
+          x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
+          alpha: 1, size: Math.random()*(big?5:3)+1,
+          color: COLORS[Math.floor(Math.random()*COLORS.length)],
+        });
+      }
+    }
+
+    // スクロールとロケット同時スタート
+    const startY = window.scrollY;
+    const dur = 1600;
+    const t0 = performance.now();
+    let reachedTop = false;
+    let bigBurstDone = false;
+
+    function doScroll(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      window.scrollTo(0, startY * (1 - ease));
+      if (p < 1) {
+        requestAnimationFrame(doScroll);
+      } else {
+        reachedTop = true;
+      }
+    }
+    requestAnimationFrame(doScroll);
+
+    function draw() {
+      fc.clearRect(0, 0, ov.width, ov.height);
+
+      // ロケット描画
+      rockets.forEach(r => {
+        if (r.done) return;
+        r.trail.unshift({x: r.x, y: r.y});
+        if (r.trail.length > 20) r.trail.pop();
+        r.trail.forEach((pt, i) => {
+          fc.save();
+          fc.globalAlpha = (1 - i / r.trail.length) * 0.8;
+          fc.fillStyle = r.color;
+          fc.beginPath(); fc.arc(pt.x, pt.y, 3 * (1 - i/r.trail.length), 0, Math.PI*2); fc.fill();
+          fc.restore();
+        });
+        // 先端白点
+        fc.save(); fc.fillStyle = '#fff'; fc.shadowColor = r.color; fc.shadowBlur = 16;
+        fc.beginPath(); fc.arc(r.x, r.y, 3, 0, Math.PI*2); fc.fill(); fc.restore();
+
+        r.y += r.vy;
+        if (r.y <= r.targetY) { r.done = true; burst(r.x, r.y, false); }
+      });
+
+      // 最上部到達で大花火
+      if (reachedTop && !bigBurstDone) {
+        bigBurstDone = true;
+        for (let b = 0; b < 4; b++) {
+          setTimeout(() => burst(ov.width*(0.15+Math.random()*0.7), ov.height*(0.05+Math.random()*0.3), true), b*180);
+        }
+      }
+
+      // スパーク描画
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.x += s.vx; s.y += s.vy; s.vy += 0.1; s.vx *= 0.97;
+        s.alpha -= 0.013; s.size *= 0.985;
+        if (s.alpha <= 0) { sparks.splice(i, 1); continue; }
+        fc.save(); fc.globalAlpha = s.alpha; fc.fillStyle = s.color;
+        fc.shadowColor = s.color; fc.shadowBlur = 8;
+        fc.beginPath(); fc.arc(s.x, s.y, s.size, 0, Math.PI*2); fc.fill(); fc.restore();
+      }
+
+      const allDone = rockets.every(r => r.done);
+      if (!allDone || sparks.length > 0 || !bigBurstDone) {
+        requestAnimationFrame(draw);
+      } else {
+        setTimeout(() => document.body.removeChild(ov), 500);
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+</script>
+</body>
+</html>
