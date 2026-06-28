@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>漢飲み — アンプラ、最後の大花火</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0602;
+      --deep: #130c04;
+      --gold: #c8860a;
+      --gold-bright: #f5a623;
+      --gold-light: #ffd166;
+      --ember: #e84c0a;
+      --red: #9b1a0a;
+      --cream: #f0ddb0;
+      --white: #fff8ee;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--cream);
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── FIRE PARTICLES ── */
+    #fire-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 80%, rgba(200,100,10,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(155,26,10,0.3) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(5rem, 22vw, 14rem);
+      font-weight: 900;
+      line-height: 0.9;
+      background: linear-gradient(160deg, var(--gold-light) 0%, var(--gold-bright) 40%, var(--ember) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 40px rgba(245,166,35,0.4));
+      opacity: 0;
+      animation: blazeIn 1s 0.5s forwards;
+      position: relative;
+    }
+
+    .hero-sub {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(1rem, 3.5vw, 1.6rem);
+      color: var(--cream);
+      letter-spacing: 0.1em;
+      margin-top: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 1.2s forwards;
+    }
+
+    .hero-tagline {
+      margin-top: 2.5rem;
+      font-size: clamp(0.8rem, 2.2vw, 1rem);
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      border-top: 1px solid rgba(200,134,10,0.4);
+      border-bottom: 1px solid rgba(200,134,10,0.4);
+      padding: 0.6rem 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 1.6s forwards;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: rgba(200,134,10,0.6);
+      animation: bounce 2s infinite;
+    }
+    .scroll-hint::after {
+      content: '↓';
+      font-size: 1.2rem;
+      color: var(--gold);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .divider-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--gold);
+      font-size: 1.2rem;
+    }
+    .divider-line::before,
+    .divider-line::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold));
+    }
+    .divider-line::after {
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    /* ── INFO SECTION ── */
+    .info {
+      position: relative;
+      z-index: 1;
+      padding: 4rem 1.5rem 5rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: rgba(200,134,10,0.2);
+      border: 1px solid rgba(200,134,10,0.3);
+    }
+
+    .info-card {
+      background: var(--deep);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .info-card:hover { background: #1a1005; }
+    .info-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--ember), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+    .info-card:hover::before { transform: scaleX(1); }
+
+    .info-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      display: block;
+      margin-bottom: 0.8rem;
+    }
+    .info-value {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .info-note {
+      font-size: 0.7rem;
+      color: rgba(240,221,176,0.5);
+      margin-top: 0.4rem;
+    }
+
+    /* ── STORY SECTION ── */
+    .story {
+      position: relative;
+      z-index: 1;
+      padding: 4rem 1.5rem 5rem;
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .story-quote {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+      font-weight: 700;
+      line-height: 2;
+      color: var(--cream);
+      position: relative;
+    }
+    .story-quote em {
+      font-style: normal;
+      color: var(--gold-bright);
+    }
+
+    .story-body {
+      margin-top: 2rem;
+      font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+      line-height: 2.2;
+      color: rgba(240,221,176,0.7);
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      position: relative;
+      z-index: 1;
+      padding: 3rem 1.5rem 6rem;
+      text-align: center;
+    }
+
+    .cta-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(155,26,10,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(1.4rem, 5vw, 2.5rem);
+      font-weight: 900;
+      color: var(--gold-bright);
+      margin-bottom: 0.5rem;
+    }
+
+    .cta-sub {
+      font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+      color: rgba(240,221,176,0.6);
+      letter-spacing: 0.15em;
+      margin-bottom: 2.5rem;
+    }
+
+    .btn {
+      display: inline-block;
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      padding: 1rem 3rem;
+      background: linear-gradient(135deg, var(--ember) 0%, var(--red) 100%);
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      transition: filter 0.3s, transform 0.2s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+    .btn:hover::before { opacity: 1; }
+
+    .btn-ghost {
+      display: inline-block;
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      padding: 0.8rem 2.5rem;
+      background: transparent;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      text-decoration: none;
+      margin-top: 1rem;
+      transition: background 0.3s, color 0.3s;
+    }
+    .btn-ghost:hover { background: rgba(200,134,10,0.15); }
+
+    .btn-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(200,134,10,0.2);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: rgba(240,221,176,0.3);
+      letter-spacing: 0.2em;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blazeIn {
+      0%   { opacity: 0; transform: scale(0.85); filter: drop-shadow(0 0 0px rgba(245,166,35,0)); }
+      60%  { filter: drop-shadow(0 0 60px rgba(245,166,35,0.7)); }
+      100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 30px rgba(245,166,35,0.4)); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s, transform 0.7s;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="fire-canvas"></canvas>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="eyebrow">アンプラ、最後の大花火</p>
+  <h1 class="hero-title">漢飲み</h1>
+  <p class="hero-sub">憧れるのをやめましょう。</p>
+  <p class="hero-tagline">男だけで語り尽くす、<br>最高の夜にしようぜ。</p>
+  <div class="scroll-hint">SCROLL</div>
+</section>
+
+<div class="divider"><span class="divider-line">🔥</span></div>
+
+<!-- STORY -->
+<section class="story">
+  <p class="section-label reveal">About</p>
+  <p class="story-quote reveal">
+    長らく<em>眠っていた炎</em>が、<br>
+    いま再び燃え上がる。
+  </p>
+  <p class="story-body reveal">
+    最高のメンツが集まるのは、<br>
+    もう最後かもしれない。<br><br>
+    だからこそ、全力で。全員で。<br>
+    卒業前に、でかい花火を一発ぶち上げよう。
+  </p>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<!-- INFO -->
+<section class="info">
+  <p class="section-label reveal">開催情報</p>
+  <div class="info-grid reveal">
+    <div class="info-card">
+      <span class="info-label">場所</span>
+      <p class="info-value">福泉餃子</p>
+    </div>
+    <div class="info-card">
+      <span class="info-label">日程</span>
+      <p class="info-value">要調整</p>
+      <p class="info-note">7月末・8月頭を想定</p>
+    </div>
+    <div class="info-card">
+      <span class="info-label">時間</span>
+      <p class="info-value">19:00 START</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<!-- MAP -->
+<section class="info" style="padding-bottom: 3rem;">
+  <p class="section-label reveal">アクセス</p>
+  <div class="reveal" style="border: 1px solid rgba(200,134,10,0.3); overflow: hidden; position: relative;">
+    <iframe
+      src="https://maps.google.com/maps?q=33.57735,130.252433&hl=ja&z=16&output=embed"
+      width="100%"
+      height="320"
+      style="border:0; display:block; filter: grayscale(0.3) sepia(0.4) contrast(1.1);"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="福泉餃子 地図">
+    </iframe>
+    <a
+      href="https://maps.app.goo.gl/uRXrVmAMTvPxokqV8"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="
+        display: block;
+        margin-top: 1rem;
+        text-align: center;
+        font-family: 'Noto Serif JP', serif;
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        color: var(--gold);
+        text-decoration: none;
+        padding: 0.6rem;
+        border: 1px solid rgba(200,134,10,0.3);
+        transition: background 0.3s;
+      "
+      onmouseover="this.style.background='rgba(200,134,10,0.1)'"
+      onmouseout="this.style.background='transparent'"
+    >Google マップで開く →</a>
+  </div>
+</section>
+
+<div class="divider"><span class="divider-line">&#x2015;</span></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <h2 class="cta-title reveal">お前も来い。</h2>
+  <p class="cta-sub reveal">全員集合。それだけでいい。</p>
+  <div class="btn-row reveal">
+    <a href="#" class="btn" id="btn-join" onclick="launchFireworks(event)">参加する</a>
+  </div>
+</section>
+
+<footer>
+  &copy; 2025 アンプラ漢飲み実行委員会
+</footer>
+
+<script>
+  // ── Fire Particle Canvas ──
+  const canvas = document.getElementById('fire-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * W;
+      this.y = H + 20;
+      this.vx = (Math.random() - 0.5) * 1.2;
+      this.vy = -(Math.random() * 2 + 1.5);
+      this.life = 0;
+      this.maxLife = Math.random() * 120 + 60;
+      this.size = Math.random() * 6 + 2;
+      const hue = Math.random() * 40 + 10;
+      this.color = `hsl(${hue},100%,60%)`;
+    }
+    update() {
+      this.life++;
+      this.x += this.vx + Math.sin(this.life * 0.1) * 0.5;
+      this.y += this.vy;
+      this.vy *= 0.99;
+      this.size *= 0.98;
+      if (this.life >= this.maxLife || this.size < 0.3) this.reset();
+    }
+    draw() {
+      const alpha = 1 - this.life / this.maxLife;
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.8;
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  for (let i = 0; i < 120; i++) {
+    const p = new Particle();
+    p.life = Math.random() * p.maxLife;
+    particles.push(p);
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // ── Scroll reveal ──
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // ── Fireworks on button click ──
+  function launchFireworks(e) {
+    e.preventDefault();
+
+    const overlay = document.createElement("canvas");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;pointer-events:none;";
+    overlay.width = window.innerWidth;
+    overlay.height = window.innerHeight;
+    document.body.appendChild(overlay);
+    const fctx = overlay.getContext("2d");
+
+    const colors = ["#ffd166","#f5a623","#e84c0a","#fff8ee","#ff6b6b","#c8860a","#ffffff"];
+
+    // 打ち上げ玉（下から上へ飛んでいく）
+    const rockets = [];
+    for (let i = 0; i < 6; i++) {
+      rockets.push({
+        x: overlay.width * (0.1 + Math.random() * 0.8),
+        y: overlay.height,
+        vy: -(Math.random() * 8 + 10),
+        targetY: overlay.height * (0.1 + Math.random() * 0.35),
+        color: colors[Math.floor(Math.random() * colors.length)],
+        trail: [],
+        exploded: false,
+        delay: Math.floor(i * 8),
+      });
+    }
+
+    // 爆発パーティクル
+    const explosions = [];
+
+    function explode(x, y, big) {
+      const count = big ? 120 : 70;
+      const speedMax = big ? 12 : 7;
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      for (let j = 0; j < count; j++) {
+        const angle = (Math.PI * 2 / count) * j + Math.random() * 0.3;
+        const speed = Math.random() * speedMax + (big ? 3 : 1.5);
+        explosions.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          color: big ? colors[Math.floor(Math.random() * colors.length)] : c,
+          size: Math.random() * (big ? 5 : 3) + (big ? 2 : 1),
+          gravity: big ? 0.12 : 0.08,
+        });
+      }
+    }
+
+    let frame = 0;
+    let scrollStarted = false;
+    let bigBangDone = false;
+    let bigBangFrame = -1;
+
+    function animFW() {
+      fctx.clearRect(0, 0, overlay.width, overlay.height);
+
+      // スクロール開始（少し遅らせる）
+      if (frame === 0 && !scrollStarted) {
+        scrollStarted = true;
+        const scrollDuration = 1800;
+        const startY = window.scrollY;
+        const startTime = performance.now();
+        function smoothScroll(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / scrollDuration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          window.scrollTo(0, startY * (1 - ease));
+          if (progress < 1) {
+            requestAnimationFrame(smoothScroll);
+          } else {
+            // 最上部到達 → 大花火
+            bigBangFrame = frame;
+          }
+        }
+        requestAnimationFrame(smoothScroll);
+      }
+
+      // ロケット描画
+      rockets.forEach(r => {
+        if (frame < r.delay || r.exploded) return;
+        r.trail.push({ x: r.x, y: r.y, alpha: 1 });
+        if (r.trail.length > 18) r.trail.shift();
+
+        r.trail.forEach((t, i) => {
+          t.alpha -= 0.06;
+          fctx.save();
+          fctx.globalAlpha = Math.max(0, t.alpha);
+          fctx.fillStyle = r.color;
+          fctx.shadowColor = r.color;
+          fctx.shadowBlur = 6;
+          const sz = (i / r.trail.length) * 4;
+          fctx.beginPath();
+          fctx.arc(t.x, t.y, sz, 0, Math.PI * 2);
+          fctx.fill();
+          fctx.restore();
+        });
+
+        // 玉の先端
+        fctx.save();
+        fctx.globalAlpha = 1;
+        fctx.fillStyle = "#ffffff";
+        fctx.shadowColor = r.color;
+        fctx.shadowBlur = 20;
+        fctx.beginPath();
+        fctx.arc(r.x, r.y, 4, 0, Math.PI * 2);
+        fctx.fill();
+        fctx.restore();
+
+        r.y += r.vy;
+
+        if (r.y <= r.targetY) {
+          r.exploded = true;
+          explode(r.x, r.y, false);
+        }
+      });
+
+      // 大花火（最上部到達時）
+      if (bigBangFrame > 0 && !bigBangDone && frame >= bigBangFrame) {
+        bigBangDone = true;
+        for (let b = 0; b < 5; b++) {
+          setTimeout(() => {
+            explode(overlay.width * (0.2 + Math.random() * 0.6), overlay.height * (0.1 + Math.random() * 0.3), true);
+          }, b * 150);
+        }
+      }
+
+      // 爆発パーティクル描画
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        const p = explosions[i];
+        p.x += p.vx; p.y += p.vy; p.vy += p.gravity;
+        p.vx *= 0.97; p.alpha -= 0.012; p.size *= 0.985;
+        if (p.alpha <= 0) { explosions.splice(i, 1); continue; }
+        fctx.save();
+        fctx.globalAlpha = p.alpha;
+        fctx.fillStyle = p.color;
+        fctx.shadowColor = p.color;
+        fctx.shadowBlur = 10;
+        fctx.beginPath();
+        fctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        fctx.fill();
+        fctx.restore();
+      }
+
+      frame++;
+      const allRocketsDone = rockets.every(r => r.exploded);
+      if (!allRocketsDone || explosions.length > 0 || frame < 300) {
+        requestAnimationFrame(animFW);
+      } else {
+        document.body.removeChild(overlay);
+      }
+    }
+
+    animFW();
+  }
+</script>
+</body>
+</html>
